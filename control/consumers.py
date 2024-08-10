@@ -16,8 +16,7 @@ pairings = {}
 class ControlConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.parse_connection_params()
-        print(self.connection_type)
-        await self.accept()
+        print(f"Connection Type: {self.connection_type}")
         await self.add_to_connections()
         await self.attempt_pairing()
 
@@ -28,10 +27,15 @@ class ControlConsumer(AsyncWebsocketConsumer):
         
         self.token = query_params.get('token', [None])[0]
         self.connection_type = query_params.get('connection_type', ['unknown'])[0]
-        self.id = query_params.get('id', ['unknown'])[0]
+
+        if self.connection_type == "user":
+            self.id = self.get_user_id(self.token)
+        else:
+            self.id = self.scope.get('robot_id')
         self.client_ip = self.scope['client'][0]
-        self.user = AnonymousUser()
-        self.robot = None
+        self.user = self.scope['user']
+        self.robot_authenticated = self.scope.get('robot', False)
+
 
     
     async def handle_robot_connection(self):
@@ -45,10 +49,8 @@ class ControlConsumer(AsyncWebsocketConsumer):
 
     async def handle_user_connection(self):
         if self.token:
-            print(self.token)
             self.user = await self.get_user_from_token(self.token)
         
-        print(self.user)
         if not self.user.is_authenticated:
             await self.close()
             return
@@ -61,12 +63,12 @@ class ControlConsumer(AsyncWebsocketConsumer):
             await self.close()
 
     async def disconnect(self, close_code):
-        print("WebSocket connection closed")
         await self.remove_from_connections()
         await self.remove_from_pairing()
         print(f"Disconnected: {self.connection_type} {self.id}")
     
     async def receive(self, text_data):
+        print(pairings)
         print(text_data)
         data = json.loads(text_data)
         if self.connection_type == 'user':
@@ -105,10 +107,20 @@ class ControlConsumer(AsyncWebsocketConsumer):
                 }))
 
     async def add_to_connections(self):
-        if self.connection_type == 'user':
+        if self.connection_type == 'user' and self.user.is_authenticated:
             user_connections[self.id] = self
-        else:
+            await self.accept()
+        elif self.connection_type == 'robot' and self.scope.get('is_robot', False):
             robot_connections[self.id] = self
+            await self.accept()
+        else:
+            print("Not Authenticated")
+            # await self.send({
+            #     "type": "websocket.close",
+            #     "code": 403,  # Custom code for authentication failure
+            #     "reason": "Authentication required"
+            # })
+            await self.close()
 
     async def remove_from_connections(self):
         if self.connection_type == 'user':
@@ -134,6 +146,11 @@ class ControlConsumer(AsyncWebsocketConsumer):
                 }))
         else:  # robot
             user_id = await self.get_user_id_for_robot(self.id)
+            print(f"user_id: {user_id}")
+            print(f"user_connections: {user_connections}")
+            print(type(user_id))
+            print(user_id in user_connections)
+            user_id = int(user_id)
             if user_id in user_connections:
                 pairings[user_id] = self.id
                 await user_connections[user_id].send(text_data=json.dumps({
@@ -160,7 +177,7 @@ class ControlConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async   
     def get_robot(self):
         try:
-            robot =  Robot.objects.get(id='1')
+            robot =  Robot.objects.get(self.id)
             return robot
         except Robot.DoesNotExist:
             return None
@@ -198,5 +215,15 @@ class ControlConsumer(AsyncWebsocketConsumer):
             print(user_id)
             user = User.objects.get(id=user_id)
             return user
+        except (InvalidToken, TokenError, User.DoesNotExist):
+            return None
+
+
+    def get_user_id(self, token):
+        try:
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            print(type(user_id))
+            return user_id
         except (InvalidToken, TokenError, User.DoesNotExist):
             return None

@@ -14,10 +14,10 @@
         let socket;
 
         function connect() {
-            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIyNzk1ODIxLCJpYXQiOjE3MjI3OTIyMjEsImp0aSI6IjdlNDUxYjUwZjUzNDRjMWNhMzk4ODQwZGRkMjY1OGE3IiwidXNlcl9pZCI6MX0.uHd9c8UHQ3UqkFrmTSUYmW_FXUAwY-x6CIp-P0gRZWE';  // Retrieve this token from your authentication process
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIzMzIyNjc4LCJpYXQiOjE3MjMzMTkwNzgsImp0aSI6ImUwNDRkMDIzYmJjYTRlYTI5MWU3ZDRhZjk0YTk3YmQ0IiwidXNlcl9pZCI6MX0.Opuvwy2IfjL5f77-aDiu7fcRWEypbc4cVuMlWC7hcT0';  
             const connectionType = 'user';  // or 'robot' based on your connection type
 
-            socket = new WebSocket(`ws://127.0.0.1:8000/ws/control/?token=${token}&connection_type=${connectionType}&id=1`);
+            socket = new WebSocket(`ws://127.0.0.1:8000/ws/control/?token=${token}&connection_type=${connectionType}`);
 
             socket.onopen = function(event) {
                 console.log("WebSocket is open now.");

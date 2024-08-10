@@ -17,12 +17,12 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": 
     # AllowedHostsOriginValidator(
-        # TokenAuthMiddleware(
-        #     CertificateAuthMiddleware(
+        TokenAuthMiddleware(
+            CertificateAuthMiddleware(
                 URLRouter(
                     control.routing.websocket_urlpatterns
-            #     )
-            # )
+                )
+            )
         # )
     ),
 })

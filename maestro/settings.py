@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from django.conf import settings
-# import ssl
+import ssl
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -75,33 +75,8 @@ CHANNEL_LAYERS = {
     },
 }
 
-# SECURE_SSL_REDIRECT = False
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# SSL_CERT_FILE = 'certs/ca.crt'
-
-# def verify_certificate(ssl_info):
-#     cert = ssl_info.get('client_cert', None)
-#     if cert:
-#         try:
-#             # Load the CA certificate
-#             ca_cert = ssl.load_certificate(ssl.FILETYPE_PEM, open(SSL_CERT_FILE).read())
-            
-#             # Create a certificate store and add the CA cert
-#             store = ssl.create_certificate_store()
-#             store.add_cert(ca_cert)
-            
-#             # Create a certificate context
-#             context = ssl.create_certificate_context(ssl.CERT_REQUIRED)
-#             context.set_store(store)
-            
-#             # Verify the client certificate
-#             context.verify_certificate(cert)
-#             return True
-#         except ssl.SSLError:
-#             return False
-#     return False
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
